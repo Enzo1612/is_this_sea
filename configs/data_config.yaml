@@ -1,0 +1,12 @@
+dataset:
+  name: sea_classifier
+  task: binary_classification
+
+paths:
+  train: processed/train
+  val: processed/val
+  test: processed/test
+
+classes:
+  - non_sea
+  - sea

@@ -1,8 +1,8 @@
 # How tasks are spread
 
-| Person  | Tasks           |
-| ------- | --------------- |
-| Enzo    | Doc + Tests     |
-| Gaetan  | Data            |
-| Tarun   | Visualization   |
-| Antoine | How models work |
+| Person  | Tasks           | Files             |
+| ------- | --------------- | ----------------- |
+| Enzo    | Doc + Tests     | README + notebook |
+| Gaetan  | Data            | src/ + scripts/   |
+| Tarun   | Visualization   | src/ + scripts/   |
+| Antoine | How models work | his own file      |

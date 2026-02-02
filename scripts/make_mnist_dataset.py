@@ -1,6 +1,6 @@
-from ..src.dataloader import DataLoader
+from ..src.dataloader import MNIST_DataLoader
 
-dataLoader = DataLoader()
+dataLoader = MNIST_DataLoader()
 X, y = dataLoader.load_mnist()
 
 X_train, X_test, y_train, y_test = X[:60000], X[60000:], y[:60000], y[60000:]

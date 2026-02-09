@@ -6,3 +6,5 @@
 | Gaetan  | Data            | src/ + scripts/   |
 | Tarun   | Visualization   | src/ + scripts/   |
 | Antoine | How models work | his own file      |
+
+Library to use: `Pillow`

@@ -1,0 +1,155 @@
+[
+    {
+        "algo": "GaussianNB",
+        "hyper": {
+            "var_smoothing": {
+                "type": "continuous",
+                "step": 1e-10,
+                "range": [1e-12, 1e-6]
+            },
+            "priors": {
+                "type": "discrete",
+                "values": [null, [0.5, 0.5], [0.3, 0.7]]
+            }
+        }
+    },
+    {
+        "algo": "SVC",
+        "hyper": {
+            "C": {
+                "type": "continuous",
+                "step": 0.5,
+                "range": [0.1, 10.0]
+            },
+            "kernel": {
+                "type": "discrete",
+                "values": ["linear", "poly", "rbf", "sigmoid"]
+            },
+            "gamma": {
+                "type": "discrete",
+                "values": ["scale", "auto"]
+            },
+            "degree": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [2.0, 5.0]
+            },
+            "class_weight": {
+                "type": "discrete",
+                "values": [null, "balanced"]
+            }
+        }
+    },
+    {
+        "algo": "KNN",
+        "hyper": {
+            "n_neighbors": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [1.0, 15.0]
+            },
+            "weights": {
+                "type": "discrete",
+                "values": ["uniform", "distance"]
+            },
+            "metric": {
+                "type": "discrete",
+                "values": ["minkowski", "euclidean", "manhattan"]
+            },
+            "p": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [1.0, 2.0]
+            },
+            "algorithm": {
+                "type": "discrete",
+                "values": ["auto", "ball_tree", "kd_tree", "brute"]
+            }
+        }
+    },
+    {
+        "algo": "DecisionTree",
+        "hyper": {
+            "criterion": {
+                "type": "discrete",
+                "values": ["gini", "entropy", "log_loss"]
+            },
+            "max_depth": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [1.0, 30.0]
+            },
+            "min_samples_split": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [2.0, 20.0]
+            },
+            "min_samples_leaf": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [1.0, 10.0]
+            },
+            "max_features": {
+                "type": "discrete",
+                "values": [null, "sqrt", "log2"]
+            }
+        }
+    },
+    {
+        "algo": "RandomForest",
+        "hyper": {
+            "n_estimators": {
+                "type": "continuous",
+                "step": 50.0,
+                "range": [50.0, 500.0]
+            },
+            "max_depth": {
+                "type": "continuous",
+                "step": 5.0,
+                "range": [5.0, 50.0]
+            },
+            "min_samples_split": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [2.0, 10.0]
+            },
+            "min_samples_leaf": {
+                "type": "continuous",
+                "step": 1.0,
+                "range": [1.0, 5.0]
+            },
+            "max_features": {
+                "type": "discrete",
+                "values": ["sqrt", "log2", null]
+            }
+        }
+    },
+    {
+        "algo": "Bagging",
+        "hyper": {
+            "n_estimators": {
+                "type": "continuous",
+                "step": 10.0,
+                "range": [10.0, 200.0]
+            },
+            "max_samples": {
+                "type": "continuous",
+                "step": 0.1,
+                "range": [0.5, 1.0]
+            },
+            "max_features": {
+                "type": "continuous",
+                "step": 0.1,
+                "range": [0.5, 1.0]
+            },
+            "bootstrap": {
+                "type": "discrete",
+                "values": [true, false]
+            },
+            "bootstrap_features": {
+                "type": "discrete",
+                "values": [true, false]
+            }
+        }
+    }
+]

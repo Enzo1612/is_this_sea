@@ -34,9 +34,9 @@ def predictFile(sample, EE, ER):
             img_name = s["name_path"].split(os.sep)[-1] 
             pred = s["y_predicted_class"]
             f.write(f"{img_name} {pred:+d}\n")
-        if model.compute_empirical_error is not None:
+        if EE is not None:
             f.write(f"\n# EE = {EE:.2f}\n")
-        if model.cross_val is not None:
+        if ER is not None:
             f.write(f"# ER = {ER:.2f}\n")
 
 
@@ -136,6 +136,8 @@ def main():
         print(f"Test error: {test_err:.2f}, Train error: {train_err:.2f}")
         print("\n", "-" * 50, "\n", sep="")
 
+        joblib.dump(classifieur, "model.pkl") 
+
     # for algo in algos:
     #     print(f"Testing {algo['algo']}")
         
@@ -200,24 +202,25 @@ def main():
 #     print(f"Final test error: {test_err:.4f}")
 
 if __name__ == "__main__":
-    main()
+    # main()
 
-    # folder_name = ""
-    # s = Sample()
-    # sample = s.make_path(folder_name, 0)
-    # clf = joblib.load("model.pkl")
+    folder_name = "data/raw/Init/Test"
+    s = Sample()
+    train_sample, test_sample = s.buildSampleFromPath(path1=f"{folder_name}/Mer", path2=f"{folder_name}/Ailleurs", apply_rotation=False, apply_flip=False, apply_brightness_modification=False)
+    sample = train_sample + test_sample
+    clf = joblib.load("model.pkl")
 
-    # X_test, y_test, test_err = model.predictFromHisto(sample, clf, use_hog=use_hog, use_histo=use_histo)
-    # print("test predict done")
+    X_test, y_test, test_err = model.predictFromHisto(sample, clf, use_hog=use_hog, use_histo=use_histo)
+    print("test predict done")
 
-    # # model.cross_val(classifieur, X_test, y_test)
+    # model.cross_val(classifieur, X_test, y_test)
     
-    # # _, test_err = model.empirical_error_on_sample(X_test, y_test, classifieur)
-    # cv = model.cross_val_on_sample(X_test, y_test, clf, cv=5)
-    # print(cv, cv.mean(), sep="\t")
-    # print(f"Test error: {test_err:.2f}")
+    # _, test_err = model.empirical_error_on_sample(X_test, y_test, classifieur)
+    cv = model.cross_val_on_sample(X_test, y_test, clf, cv=5)
+    print(cv, cv.mean(), sep="\t")
+    print(f"Test error: {test_err:.2f}")
 
-    # predictFile(sample, test_err, cv.mean())
+    predictFile(sample, test_err, cv.mean())
 
 
 

@@ -2,6 +2,10 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
 
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import Pipeline
+
 
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
@@ -22,7 +26,7 @@ models = {
 
 }
 
-def _build_X_y(sample, use_hog=True, use_histo=True):
+def _build_X_y(sample, use_hog=False, use_histo=True):
     X = []
     y = []
     for s in sample:
@@ -40,62 +44,58 @@ def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False
         raise ValueError("Invalid hyperparameters")
 
     X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
+    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
 
     # model is valid from areHyperValid
     model_class = models[algo["algo"]]
     classifieur = model_class(**algo["hyper"])
 
-    # if (algo["algo"] == "GaussianNB"):
-    #     # No hyperparameters for GaussianNB
-    #     classifieur = GaussianNB(**algo["hyper"]) # **algo["hyper"] unpacks the hyperparameters dictionary
-    # elif (algo["algo"] == "SVC"):
-    #     classifieur = SVC(**algo["hyper"])
-    # else:
-    #     raise TypeError("Model isn't valid")
-    classifieur.fit(X_train, y_train)
-    return (classifieur, X_test, y_test)
+    pipeline = Pipeline([
+        ('scaler', StandardScaler()),  # Important pour PCA et KNN/SVC
+        ('pca', PCA(n_components=0.95)), # Conserve 95% de la variance
+        ('clf', classifieur)
+    ])
 
-def predictFromHisto(sample, model, use_hog=False, use_histo=True):
-    X, _ = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    predicted = model.predict(X)
+    pipeline.fit(X, y)
+    return (pipeline, X, y)
+
+    # classifieur.fit(X, y)
+    # return (classifieur, X, y)
+
+def predictFromHisto(sample, clf, use_hog=False, use_histo=True):
+    X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
+    y_pred = clf.predict(X)
     for i in range(len(sample)):
-        sample[i]["y_predicted_class"] = predicted[i]
-    return sample
+        sample[i]["y_predicted_class"] = y_pred[i]
+    return (X, y, 1 - accuracy_score(y, y_pred))
 
-def compute_empirical_error(sample, model, use_hog=False, use_histo=True): 
-    X, y_true = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    y_pred = model.predict(X)
+# def compute_empirical_error(sample, clf, use_hog=False, use_histo=True): 
+#     X, y_true = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
+#     y_pred = clf.predict(X)
+#     err = 1 - accuracy_score(y_true, y_pred)
+#     print(f"Empirical error : {err}")
+
+# def cross_val(model, X, y):
+#     print(cross_val_score(model, X, y, cv=3))
+
+
+def empirical_error(y_true, y_pred):
     err = 1 - accuracy_score(y_true, y_pred)
-    print(f"Empirical error : {err}")
+    return err
 
-def cross_val(model, X, y):
-    print(cross_val_score(model, X, y, cv=3))
-
-
-def train_test_eval(sample, algo, use_hog=False, use_histo=True, test_size=0.2, random_state=42):
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    X_train, X_test, y_train, y_test = train_test_split(
-        X, y, test_size=test_size, stratify=y, random_state=random_state
-    )
-    model_class = models[algo["algo"]]
-    clf = model_class(**algo["hyper"])
-    clf.fit(X_train, y_train)
-
-    y_pred_test = clf.predict(X_test)
-    test_err = 1 - accuracy_score(y_test, y_pred_test)
-
-    y_pred_train = clf.predict(X_train)
-    train_err = 1 - accuracy_score(y_train, y_pred_train)
-
-    return clf, test_err, train_err
-
-def cross_val_on_sample(sample, algo, use_hog=False, use_histo=True, cv=5):
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    model_class = models[algo["algo"]]
-    clf = model_class(**algo["hyper"])
+def cross_val_on_sample(X, y, clf, cv=5):
     return 1 - cross_val_score(clf, X, y, cv=cv)
 
+def get_train_error(clf, X_train, y_train):
+    return 1 - accuracy_score(y_train, clf.predict(X_train))
+
+
+# def split_samples(samples, test_size=0.2, random_state=42):
+#     return train_test_split(samples, test_size=test_size, random_state=random_state)
+
+def split_samples(samples, test_size=0.2, random_state=42):
+    y = [s["y_true_class"] for s in samples]
+    return train_test_split(samples, test_size=test_size, random_state=random_state, stratify=y)
 
 def areHyperValid(algo):
     if (algo["algo"] not in models):

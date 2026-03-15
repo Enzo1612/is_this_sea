@@ -1,8 +1,14 @@
 import json
+import itertools
+
+import random
 
 import numpy as np
 
-def mass_test(sample, algos):
+import model
+
+def mass_test(train_sample, test_sample, algos, n_top=10):
+    top_models = []
     for algo in algos:
         print(f"Testing {algo['algo']}")
         list_hyper = []
@@ -15,7 +21,45 @@ def mass_test(sample, algos):
                 list_hyper.append((HP_name, HP_info["values"]))
             else:
                 raise ValueError("Invalid hyperparameter type")
-                
+        list_name = []
+        list_value = []
+
+        # # --- MODIFICATION FOR TESTING ---
+        # # Generate all combinations and pick a small random sample
+        # all_combinations = list(itertools.product(*list_value))
+        # num_to_test = min(5, len(all_combinations)) # Test up to 5, or fewer if not enough combinations exist
+        # combinations_to_try = random.sample(all_combinations, num_to_test)
+        # # --- END MODIFICATION ---
+
+        for HP_name, values in list_hyper:
+            list_name.append(HP_name)
+            list_value.append(values)
+        combinations_to_try = list(itertools.product(*list_value))
+        for combination in combinations_to_try:
+            # print(f"starting combination")
+            # hyper = dict(zip(list_name, combination))
+            hyper = {}
+            for i, j in zip(list_name, combination):
+                if isinstance(j, float) and j.is_integer():
+                    hyper[i] = int(j)
+                else:
+                    hyper[i] = j
+
+            algos_test = {"algo": algo["algo"], "hyper": hyper }
+            test_err, train_err = test(train_sample, test_sample, algos_test)
+            print(f"Test error: {test_err:.4f}, Train error: {train_err:.4f} for hyperparameters: {hyper}")
+            if len(top_models) < n_top:
+                top_models.append((test_err, algos_test))
+                top_models.sort(key=lambda x: x[0]) # Keep it sorted
+            elif test_err < top_models[-1][0]:
+                top_models[-1] = (test_err, algos_test)
+                top_models.sort(key=lambda x: x[0]) # Keep it sorted
+
+    print("\n--- Top 10 Models ---")
+    for score, tested_algo in top_models:
+        print(f"Score: {score:.4f}, Algorithm: {tested_algo['algo']}, Hyperparameters: {tested_algo['hyper']}")
+
+    return top_models
 
 
         # params = []
@@ -48,10 +92,14 @@ algo = {
 }
 """     
 
-def test (sample, algo):
-    ...
+def test (train_sample, test_sample, algo):
+    clf, X, y = model.fitFromHisto(train_sample, algo=algo)
+    _, _, test_err = model.predictFromHisto(test_sample, clf)
+    train_err = model.get_train_error(clf, X, y)
 
-def mass_test_from_json(sample, json_path):
+    return (test_err, train_err)
+
+def mass_test_from_json(train_sample, test_sample, json_path):
     with open(json_path, "r") as f:
         algos = json.load(f)
-    mass_test(sample, algos)
+    mass_test(train_sample, test_sample, algos)

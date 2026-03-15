@@ -1,4 +1,6 @@
 
+import joblib
+
 import model
 from sample import Sample
 
@@ -21,12 +23,12 @@ def hyperparametres_to_string(algo):
     return f"{algo_name}({hyper_to_string})"
 
 
-def predictFile(sample, EE, ER, algo):
+def predictFile(sample, EE, ER):
     with open("equipe.txt", "w") as f:
         f.write(f"# E.Nicaise, T.Rakesh, G.Elouard-Bucchini, A.Tomasi (Equipe KING_BE4RN2000)\n")
-        f.write(f"# {algo['algo']}\n")
-        f.write(f"# {hyperparametres_to_string(algo)}\n")
-        f.write(f"# {algo['descipteurs']}\n")
+        f.write(f"# SVC\n")
+        f.write(f"# C: 2, kernel: linear, gamma: auto, degree: 3, class_weight: balanced\n")
+        f.write(f"# histogramme des couleurs (poids de 2 sur 33% du bas de l'image)\n")
         for s in sample:
             #img_name = os.path.basename(s["name_path"]) if "name_path" in s else s.get("name", "unknown")
             img_name = s["name_path"].split(os.sep)[-1] 
@@ -107,12 +109,17 @@ algos = [
 
 ]
 
+algo_test = [
+    {"algo": "SVC", "hyper": {'C': 2, 'kernel': 'linear', 'gamma': 'auto', 'degree': 3, 'class_weight': 'balanced'}},
+    
+]
+
 def main():
     s = Sample()
     train_sample, test_sample = s.buildSampleFromPath()
     print(f"Train sample size: {len(train_sample)}, Test sample size: {len(test_sample)}")  
     
-    for algo in algos:
+    for algo in algo_test:
         print(f"Testing {algo['algo']}")
         classifieur, X_train, y_train = model.fitFromHisto(train_sample, algo=algo, use_hog=use_hog, use_histo=use_histo)
         print("fit done")
@@ -193,12 +200,32 @@ def main():
 #     print(f"Final test error: {test_err:.4f}")
 
 if __name__ == "__main__":
-    # main()
-    s = Sample()
-    train_sample, test_sample = s.buildSampleFromPath(apply_brightness_modification=True, apply_flip=True, apply_rotation=True)
-    print(f"Train sample size: {len(train_sample)}, Test sample size: {len(test_sample)}") 
+    main()
 
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    json_path = os.path.join(current_dir, "models.json")
+    # folder_name = ""
+    # s = Sample()
+    # sample = s.make_path(folder_name, 0)
+    # clf = joblib.load("model.pkl")
 
-    mass_test_from_json(train_sample, test_sample, json_path)
+    # X_test, y_test, test_err = model.predictFromHisto(sample, clf, use_hog=use_hog, use_histo=use_histo)
+    # print("test predict done")
+
+    # # model.cross_val(classifieur, X_test, y_test)
+    
+    # # _, test_err = model.empirical_error_on_sample(X_test, y_test, classifieur)
+    # cv = model.cross_val_on_sample(X_test, y_test, clf, cv=5)
+    # print(cv, cv.mean(), sep="\t")
+    # print(f"Test error: {test_err:.2f}")
+
+    # predictFile(sample, test_err, cv.mean())
+
+
+
+    # s = Sample()
+    # train_sample, test_sample = s.buildSampleFromPath(apply_brightness_modification=True, apply_flip=True, apply_rotation=True)
+    # print(f"Train sample size: {len(train_sample)}, Test sample size: {len(test_sample)}") 
+
+    # current_dir = os.path.dirname(os.path.abspath(__file__))
+    # json_path = os.path.join(current_dir, "models.json")
+
+    # mass_test_from_json(train_sample, test_sample, json_path)

@@ -30,7 +30,6 @@ def predictFile(sample, EE, ER):
 
 
 algos = [
-
     {
         "algo": "SVC",
         "hyper": {
@@ -95,7 +94,6 @@ algos = [
         "HP_str": "TODO",
         "descipteurs": "TODO"
     }
-
 ]
 
 algo_test = [

@@ -66,7 +66,6 @@ def predictFromHisto(sample, clf, use_hog=False, use_histo=True):
         sample[i]["y_predicted_class"] = y_pred[i]
     return (X, y, 1 - accuracy_score(y, y_pred))
 
-
 def empirical_error(y_true, y_pred):
     err = 1 - accuracy_score(y_true, y_pred)
     return err

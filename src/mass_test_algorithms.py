@@ -1,8 +1,6 @@
 import json
 import itertools
 
-import random
-
 import numpy as np
 
 import model

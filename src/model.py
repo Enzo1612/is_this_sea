@@ -6,7 +6,7 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
-
+# Importation of the models
 from sklearn.naive_bayes import GaussianNB
 from sklearn.svm import SVC
 from sklearn.neighbors import KNeighborsClassifier
@@ -44,23 +44,20 @@ def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False
         raise ValueError("Invalid hyperparameters")
 
     X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-    # X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.20)
 
-    # model is valid from areHyperValid
+    # Model is valid from areHyperValid
     model_class = models[algo["algo"]]
     classifieur = model_class(**algo["hyper"])
 
+    # Pipeline is needed for the HOG feature
     pipeline = Pipeline([
-        ('scaler', StandardScaler()),  # Important pour PCA et KNN/SVC
-        ('pca', PCA(n_components=0.95)), # Conserve 95% de la variance
-        ('clf', classifieur)
+        ('scaler', StandardScaler()),  # Standardise the histogram
+        ('pca', PCA(n_components=0.95)), # Reduce dimensionality while keeping 95% of variance
+        ('clf', classifieur) # Learns of the processed histogram
     ])
 
-    pipeline.fit(X, y)
+    pipeline.fit(X, y) # fit makes the data (X) go through the pipeline
     return (pipeline, X, y)
-
-    # classifieur.fit(X, y)
-    # return (classifieur, X, y)
 
 def predictFromHisto(sample, clf, use_hog=False, use_histo=True):
     X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
@@ -89,15 +86,13 @@ def cross_val_on_sample(X, y, clf, cv=5):
 def get_train_error(clf, X_train, y_train):
     return 1 - accuracy_score(y_train, clf.predict(X_train))
 
-
-# def split_samples(samples, test_size=0.2, random_state=42):
-#     return train_test_split(samples, test_size=test_size, random_state=random_state)
-
 def split_samples(samples, test_size=0.2, random_state=42):
     y = [s["y_true_class"] for s in samples]
     return train_test_split(samples, test_size=test_size, random_state=random_state, stratify=y)
 
 def areHyperValid(algo):
+    # Ensures the model name and all the hyperparameters are valid 
+
     if (algo["algo"] not in models):
         raise ValueError("Invalid model name")
     

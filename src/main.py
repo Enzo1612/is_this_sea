@@ -143,14 +143,3 @@ if __name__ == "__main__":
     print(f"Test error: {test_err:.2f}")
 
     predictFile(sample, test_err, cv.mean())
-
-
-
-    # s = Sample()
-    # train_sample, test_sample = s.buildSampleFromPath(apply_brightness_modification=True, apply_flip=True, apply_rotation=True)
-    # print(f"Train sample size: {len(train_sample)}, Test sample size: {len(test_sample)}") 
-
-    # current_dir = os.path.dirname(os.path.abspath(__file__))
-    # json_path = os.path.join(current_dir, "models.json")
-
-    # mass_test_from_json(train_sample, test_sample, json_path)

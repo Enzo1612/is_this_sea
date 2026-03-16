@@ -66,15 +66,6 @@ def predictFromHisto(sample, clf, use_hog=False, use_histo=True):
         sample[i]["y_predicted_class"] = y_pred[i]
     return (X, y, 1 - accuracy_score(y, y_pred))
 
-# def compute_empirical_error(sample, clf, use_hog=False, use_histo=True): 
-#     X, y_true = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-#     y_pred = clf.predict(X)
-#     err = 1 - accuracy_score(y_true, y_pred)
-#     print(f"Empirical error : {err}")
-
-# def cross_val(model, X, y):
-#     print(cross_val_score(model, X, y, cv=3))
-
 
 def empirical_error(y_true, y_pred):
     err = 1 - accuracy_score(y_true, y_pred)

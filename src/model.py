@@ -26,24 +26,28 @@ models = {
 
 }
 
-def _build_X_y(sample, use_hog=False, use_histo=True):
+def _build_X_y(sample, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
     X = []
     y = []
     for s in sample:
         features = []
-        if use_histo:
-            features.append(np.array(s["X_histo"]).ravel())
+        if use_histo_hsv:
+            features.append(np.array(s["X_histo_hsv"]))
         if use_hog:
-            features.append(np.array(s["X_hog"]).ravel())
+            features.append(np.array(s["X_hog"]))
+        if use_hsv_lbp:
+            features.append(np.array(s["X_hsv_lbp"]))
+        if use_histo_rgb:
+            features.append(np.array(s["X_histo_weighted_rgb"]))
         X.append(np.concatenate(features))
         y.append(s["y_true_class"])
     return np.array(X), np.array(y)
 
-def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False, use_histo=True):
+def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
     if (not areHyperValid(algo)) :
         raise ValueError("Invalid hyperparameters")
 
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
+    X, y = _build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
 
     # Model is valid from areHyperValid
     model_class = models[algo["algo"]]
@@ -51,30 +55,20 @@ def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False
 
     # Pipeline is needed for the HOG feature
     pipeline = Pipeline([
-        ('scaler', StandardScaler()),  # Standardise the histogram
         ('pca', PCA(n_components=0.95)), # Reduce dimensionality while keeping 95% of variance
+        # ('scaler', StandardScaler()),  # Standardise the histogram (so that each features are on a comparable scale)
         ('clf', classifieur) # Learns of the processed histogram
     ])
 
     pipeline.fit(X, y) # fit makes the data (X) go through the pipeline
     return (pipeline, X, y)
 
-def predictFromHisto(sample, clf, use_hog=False, use_histo=True):
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
+def predictFromHisto(sample, clf, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
+    X, y = _build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
     y_pred = clf.predict(X)
     for i in range(len(sample)):
         sample[i]["y_predicted_class"] = y_pred[i]
-    return (X, y, 1 - accuracy_score(y, y_pred))
-
-# def compute_empirical_error(sample, clf, use_hog=False, use_histo=True): 
-#     X, y_true = _build_X_y(sample, use_hog=use_hog, use_histo=use_histo)
-#     y_pred = clf.predict(X)
-#     err = 1 - accuracy_score(y_true, y_pred)
-#     print(f"Empirical error : {err}")
-
-# def cross_val(model, X, y):
-#     print(cross_val_score(model, X, y, cv=3))
-
+    return (X, y, 1 - accuracy_score(y, y_pred), y_pred)
 
 def empirical_error(y_true, y_pred):
     err = 1 - accuracy_score(y_true, y_pred)
@@ -91,7 +85,7 @@ def split_samples(samples, test_size=0.2, random_state=42):
     return train_test_split(samples, test_size=test_size, random_state=random_state, stratify=y)
 
 def areHyperValid(algo):
-    # Ensures the model name and all the hyperparameters are valid 
+    # Ensures the model name and all the hyperparameters are valid
 
     if (algo["algo"] not in models):
         raise ValueError("Invalid model name")

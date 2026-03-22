@@ -1,62 +1,141 @@
 import json
 import itertools
 
+from sklearn.model_selection import GridSearchCV
+from sklearn.model_selection import RandomizedSearchCV
+
 import random
 
 import numpy as np
 
 import model
 
-def mass_test(train_sample, test_sample, algos, n_top=10):
-    top_models = []
+def mass_test(train_X_y, algos):
+    top_models = {}
     for algo in algos:
         print(f"Testing {algo['algo']}")
-        list_hyper = []
-        for HP_name, HP_info in algo["hyper"].items():
-            # `continuous` is currently not used as it can create lots of combinations
-            if HP_info["type"] == "continuous":
-                values = np.arange(HP_info["range"][0], HP_info["range"][1] + HP_info["step"], HP_info["step"])
-                list_hyper.append((HP_name, values))
-            elif HP_info["type"] == "discrete":
-                list_hyper.append((HP_name, HP_info["values"]))
-            else:
-                raise ValueError("Invalid hyperparameter type")
-        list_name = []
-        list_value = []
 
-        for HP_name, values in list_hyper:
-            list_name.append(HP_name)
-            list_value.append(values)
+        # print("Starting broad search...")
+        # random_search = broad_search(algo, train_X_y, n_iter=10, folds=5)
+        # print("Broad search completed.")
 
-        # Generate all combinations of hyperparameters
-        combinations_to_try = list(itertools.product(*list_value))
-        for combination in combinations_to_try:
-            hyper = {}
-            for i, j in zip(list_name, combination):
-                if isinstance(j, float) and j.is_integer():
-                    hyper[i] = int(j)
-                else:
-                    hyper[i] = j
+        # params = getCloseParams(random_search, algo["hyper"], amount=3, fill_with_random=False)
 
-            algos_test = {"algo": algo["algo"], "hyper": hyper }
-            test_err, train_err = test(train_sample, test_sample, algos_test)
-            print(f"Test error: {test_err:.4f}, Train error: {train_err:.4f} for hyperparameters: {hyper}")
+        print("Starting precise search...")
+        grid_search = precise_search(algo, train_X_y, clean_hyperparameters(algo["hyper"]), cv=1)
+        print("Precise search completed.")
 
-            # Keep track of the top `n_top` models based on test error
-            if len(top_models) < n_top:
-                # Less than `n_top` models`, add the current model
-                top_models.append((test_err, algos_test))
-                top_models.sort(key=lambda x: x[0])
-            elif test_err < top_models[-1][0]:
-                # Current model is better than the worst model in the top list, replace it
-                top_models[-1] = (test_err, algos_test)
-                top_models.sort(key=lambda x: x[0])
+        top_models[algo["algo"]] = {
+            "model": grid_search.best_estimator_,
+            "best_params": grid_search.best_params_,
+            "best_score": grid_search.best_score_,
+            "cv_results": grid_search.cv_results_
+        }
 
-    print("\n--- Top 10 Models ---")
-    for score, tested_algo in top_models:
-        print(f"Score: {score:.4f}, Algorithm: {tested_algo['algo']}, Hyperparameters: {tested_algo['hyper']}")
-
+    for model in top_models:
+        print("*" * 20)
+        print(f"Model: {model}")
+        print(f"\tBest Score: {top_models[model]['best_score']:.4f}")
+        print(f"\tBest Parameters: {top_models[model]['best_params']}")
+        # print(f"\tCV Results: {top_models[model]['cv_results']}\n\n")
     return top_models
+
+def precise_search(algo, train_X_y, params, cv=5):
+    grid_search = GridSearchCV(
+        estimator=model.models[algo["algo"]](),
+        param_grid=params,
+        scoring="accuracy",
+        cv=max(cv, 2),  # Needs to be at least 2
+        verbose=1,
+        n_jobs=-1,
+        refit=True
+    )
+    grid_search.fit(train_X_y[0], train_X_y[1])
+    return grid_search
+
+def broad_search(algo, train_X_y, n_iter=50, folds=1):
+
+    params = clean_hyperparameters(algo["hyper"])
+
+    for i in range(folds):
+        print(f"Broad search iteration {i + 1}/{folds} for {algo['algo']}")
+        random_search = RandomizedSearchCV(
+            estimator=model.models[algo["algo"]](),
+            param_distributions=params,
+            n_iter=n_iter,
+            scoring="accuracy",
+            cv=3,
+            verbose=1,
+            random_state=42,
+            n_jobs=-1,
+            refit=True
+        )
+        random_search.fit(train_X_y[0], train_X_y[1])
+
+        params = getCloseParams(random_search, algo["hyper"], amount=50, fill_with_random=True)
+
+    return random_search
+
+def clean_hyperparameters(hyper):
+    cleaned_hyper = {}
+    for param, value in hyper.items():
+        if value["type"] == "continuous":
+            cleaned_hyper[param] = np.arange(value["range"][0], value["range"][1] + value["step"], value["step"])
+        elif value["type"] == "discrete":
+            cleaned_hyper[param] = value["values"]
+        else:
+            raise ValueError("Invalid hyperparameter type")
+    return cleaned_hyper
+
+
+def getCloseParams(random_search, hyper, amount=5, fill_with_random=True):
+    best_params = random_search.best_params_
+    close_params = {}
+
+    for param, value in hyper.items():
+        if value["type"] == "continuous":
+            step = value["step"]
+            close_params[param] = select_around(
+                np.arange(value["range"][0], value["range"][1] + step, step),
+                best_params[param],
+                step,
+                amount
+            )
+        elif value["type"] == "discrete":
+            best_val = best_params.get(param)
+            all_values = value["values"]
+            
+            if best_val is not None and best_val in all_values:
+                # Start with the best value
+                selected = [best_val]
+                # Randomly sample remaining values
+                others = [v for v in all_values if v != best_val]
+                remaining_amount = amount - 1
+                if len(others) > remaining_amount:
+                    selected.extend(random.sample(others, remaining_amount))
+                else:
+                    selected.extend(others)  # Take all if not enough others
+                close_params[param] = selected
+            else:
+                # Fallback if best_val not found
+                close_params[param] = random.sample(all_values, min(amount, len(all_values)))
+        else:
+            raise ValueError("Invalid hyperparameter type")
+    return close_params
+
+
+def select_around(lst, center, step, max_size):
+    candidates = []
+
+    for x in lst:
+        if (x - center) % step == 0:
+            candidates.append((abs(x - center), x))
+
+    candidates.sort(key=lambda t: t[0])
+    
+    return [x for _, x in candidates[:max_size]]
+
+
 
 """
 algo = {
@@ -86,7 +165,22 @@ def test (train_sample, test_sample, algo):
 
     return (test_err, train_err)
 
-def mass_test_from_json(train_sample, test_sample, json_path):
+def mass_test_from_json(train_X_y, json_path, model_name=None):
     with open(json_path, "r") as f:
         algos = json.load(f)
-    mass_test(train_sample, test_sample, algos)
+
+    if model_name is not None:
+        algos = [algo for algo in algos if algo["algo"] == model_name]
+
+    mass_test(train_X_y, algos)
+
+# def mass_single_model_from_json(train_X_y, json_path, model_name):
+#     with open(json_path, "r") as f:
+#         algos = json.load(f)
+    
+#     algo = next((a for a in algos if a["algo"] == model_name), None)
+#     if algo is None:
+#         raise ValueError(f"Model {model_name} not found in JSON.")
+    
+#     return mass_test(train_X_y, [algo])
+

@@ -1,0 +1,18 @@
+Model: SVC  (use_histo_hsv, use_hsv_lbp)
+        Best Score: 0.7404
+        Best Parameters: {'C': np.int64(98), 'class_weight': 'balanced', 'degree': 2, 'gamma': 'scale', 'kernel': 'linear'}
+
+
+Model: SVC  (use_histo_hsv, use_hsv_lbp)
+        Best Score: 0.7474
+        Best Parameters: {'C': np.int64(90), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.157), 'kernel': 'rbf'}
+
+
+Model: SVC  (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
+        Best Score: 0.7785
+        Best Parameters: {'C': np.int64(90), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.31), 'kernel': 'sigmoid'}
+
+
+Model: SVC  (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
+        Best Score: 0.7785
+        Best Parameters: {'C': np.int64(78), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.347), 'kernel': 'sigmoid'}

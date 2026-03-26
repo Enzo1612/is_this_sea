@@ -1,0 +1,41 @@
+[
+    {
+        "algo": "KNeighborsClassifier",
+        "hyper": {
+            "n_neighbors": {
+                "type": "discrete",
+                "values": [1, 3, 5, 7, 9, 11, 15, 20]
+            },
+            "weights": {
+                "type": "discrete",
+                "values": ["uniform", "distance"]
+            },
+            "algorithm": {
+                "type": "discrete",
+                "values": ["auto", "ball_tree", "kd_tree", "brute"]
+            },
+            "leaf_size": {
+                "type": "continuous",
+                "step": 1,
+                "range": [10, 100]
+            },
+            "p": {
+                "type": "continuous",
+                "step": 1,
+                "range": [1, 5]
+            },
+            "metric": {
+                "type": "discrete",
+                "values": ["minkowski", "euclidean", "manhattan", "chebyshev"]
+            },
+            "metric_params": {
+                "type": "discrete",
+                "values": [null]
+            },
+            "n_jobs": {
+                "type": "discrete",
+                "values": [null, -1]
+            }
+        }
+    }
+]

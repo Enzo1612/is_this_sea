@@ -26,7 +26,7 @@ models = {
 
 }
 
-def _build_X_y(sample, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
+def build_X_y(sample, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
     X = []
     y = []
     for s in sample:
@@ -43,20 +43,18 @@ def _build_X_y(sample, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_
         y.append(s["y_true_class"])
     return np.array(X), np.array(y)
 
-def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
+def fitFromHisto(sample, pca=0.95, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
     if (not areHyperValid(algo)) :
         raise ValueError("Invalid hyperparameters")
 
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
+    X, y = build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
 
     # Model is valid from areHyperValid
     model_class = models[algo["algo"]]
     classifieur = model_class(**algo["hyper"])
 
-    # Pipeline is needed for the HOG feature
     pipeline = Pipeline([
-        ('pca', PCA(n_components=0.95)), # Reduce dimensionality while keeping 95% of variance
-        # ('scaler', StandardScaler()),  # Standardise the histogram (so that each features are on a comparable scale)
+        ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping 95% of variance
         ('clf', classifieur) # Learns of the processed histogram
     ])
 
@@ -64,7 +62,7 @@ def fitFromHisto(sample, algo={"algo": "GaussianNB", "hyper": {}}, use_hog=False
     return (pipeline, X, y)
 
 def predictFromHisto(sample, clf, use_hog=False, use_histo_hsv=True, use_hsv_lbp=True, use_histo_rgb=True):
-    X, y = _build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
+    X, y = build_X_y(sample, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
     y_pred = clf.predict(X)
     for i in range(len(sample)):
         sample[i]["y_predicted_class"] = y_pred[i]

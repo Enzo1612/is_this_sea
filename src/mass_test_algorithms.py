@@ -1,12 +1,14 @@
 import json
 import itertools
 
+from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
 from sklearn.model_selection import RandomizedSearchCV
 
 import random
 
 import numpy as np
+from sklearn.pipeline import Pipeline
 
 import model
 
@@ -16,31 +18,38 @@ def mass_test(train_X_y, algos):
         print(f"Testing {algo['algo']}")
 
         # print("Starting broad search...")
-        # random_search = broad_search(algo, train_X_y, n_iter=10, folds=5)
+        # random_search = broad_search(algo, train_X_y, n_iter=10, folds=5, pca=pca)
         # print("Broad search completed.")
 
         # params = getCloseParams(random_search, algo["hyper"], amount=3, fill_with_random=False)
 
-        print("Starting precise search...")
-        grid_search = precise_search(algo, train_X_y, clean_hyperparameters(algo["hyper"]), cv=1)
-        print("Precise search completed.")
+        # for i in [j/100 for j in range(50, 100, 5)]:
+        for i in [0.95]:  # Only test with PCA=0.95 for now
+            print(f"Starting precise search with PCA={i}...")
+            # print("Starting precise search...")
+            grid_search = precise_search(algo, train_X_y, clean_hyperparameters(algo["hyper"]), cv=1, pca=i)
+            print("Precise search completed.")
 
-        top_models[algo["algo"]] = {
-            "model": grid_search.best_estimator_,
-            "best_params": grid_search.best_params_,
-            "best_score": grid_search.best_score_,
-            "cv_results": grid_search.cv_results_
-        }
+            top_models[f"{algo['algo']}_{i}"] = {
+                "model": grid_search.best_estimator_,
+                "best_params": grid_search.best_params_,
+                "best_score": grid_search.best_score_,
+                "cv_results": grid_search.cv_results_
+            }
+
+            print("*" * 20)
+            print(f"Best Score for PCA={i}: {grid_search.best_score_:.4f}")
+            print(f"Best Parameters for PCA={i}: {grid_search.best_params_}\n\n")
+            print("\n", "-" * 50, "\n", sep="")
 
     for model in top_models:
         print("*" * 20)
         print(f"Model: {model}")
         print(f"\tBest Score: {top_models[model]['best_score']:.4f}")
         print(f"\tBest Parameters: {top_models[model]['best_params']}")
-        # print(f"\tCV Results: {top_models[model]['cv_results']}\n\n")
     return top_models
 
-def precise_search(algo, train_X_y, params, cv=5):
+def precise_search(algo, train_X_y, params, cv=5, pca=0.95):
     grid_search = GridSearchCV(
         estimator=model.models[algo["algo"]](),
         param_grid=params,
@@ -50,10 +59,16 @@ def precise_search(algo, train_X_y, params, cv=5):
         n_jobs=-1,
         refit=True
     )
-    grid_search.fit(train_X_y[0], train_X_y[1])
+
+    pipeline = Pipeline([
+        ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping 95% of variance
+        ('clf', grid_search) # Learns of the processed histogram
+    ])
+
+    pipeline.fit(train_X_y[0], train_X_y[1])
     return grid_search
 
-def broad_search(algo, train_X_y, n_iter=50, folds=1):
+def broad_search(algo, train_X_y, n_iter=50, folds=1, pca=0.95):
 
     params = clean_hyperparameters(algo["hyper"])
 
@@ -70,7 +85,13 @@ def broad_search(algo, train_X_y, n_iter=50, folds=1):
             n_jobs=-1,
             refit=True
         )
-        random_search.fit(train_X_y[0], train_X_y[1])
+
+        pipeline = Pipeline([
+            ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping 95% of variance
+            ('clf', random_search) # Learns of the processed histogram
+        ])
+
+        pipeline.fit(train_X_y[0], train_X_y[1])
 
         params = getCloseParams(random_search, algo["hyper"], amount=50, fill_with_random=True)
 

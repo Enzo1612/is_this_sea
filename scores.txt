@@ -1,18 +1,116 @@
-Model: SVC  (use_histo_hsv, use_hsv_lbp)
+Model: SVC      (use_histo_hsv, use_hsv_lbp)
         Best Score: 0.7404
         Best Parameters: {'C': np.int64(98), 'class_weight': 'balanced', 'degree': 2, 'gamma': 'scale', 'kernel': 'linear'}
 
 
-Model: SVC  (use_histo_hsv, use_hsv_lbp)
+Model: SVC      (use_histo_hsv, use_hsv_lbp)
         Best Score: 0.7474
         Best Parameters: {'C': np.int64(90), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.157), 'kernel': 'rbf'}
 
 
-Model: SVC  (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
         Best Score: 0.7785
         Best Parameters: {'C': np.int64(90), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.31), 'kernel': 'sigmoid'}
 
 
-Model: SVC  (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp)
         Best Score: 0.7785
         Best Parameters: {'C': np.int64(78), 'class_weight': 'balanced', 'degree': 2, 'gamma': np.float64(0.347), 'kernel': 'sigmoid'}
+
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp, use_hog)
+        Best Score: 0.7336
+        Best Parameters: {'C': np.int64(1), 'class_weight': 'balanced', 'degree': 1, 'gamma': np.float64(0.2), 'kernel': 'rbf'}
+
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp, use_hog)
+        Best Score: 0.7405
+        Best Parameters: {'C': np.float64(1.4), 'class_weight': 'balanced', 'degree': 1, 'gamma': np.float64(0.28), 'kernel': 'rbf'}
+
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp, use_hog)
+        Best Score: 0.7405
+        Best Parameters: {'C': np.float64(1.4), 'class_weight': 'balanced', 'degree': 1, 'gamma': np.float64(0.28), 'kernel': 'rbf'}
+
+Model: SVC      (use_histo_hsv, use_histo_rgb, use_hsv_lbp, use_hog) (rgb coeff = 1)
+        Best Score: 0.7716
+        Best Parameters: {'C': np.float64(10.7), 'class_weight': 'balanced', 'degree': 1, 'gamma': np.float64(3.6), 'kernel': 'sigmoid'}
+
+
+
+
+
+
+
+
+
+
+
+
+Train sample size: 289, Test sample size: 124
+Testing GaussianNB
+Starting precise search with PCA=0.95...
+Fitting 2 folds for each of 16 candidates, totalling 32 fits
+Precise search completed.
+********************
+Best Score for PCA=0.95: 0.5884
+Best Parameters for PCA=0.95: {'priors': [0.7, 0.3], 'var_smoothing': 1e-12}
+
+Best Score for PCA=0.95: 0.5884
+Best Parameters for PCA=0.95: {'priors': [0.7, 0.3], 'var_smoothing': 1e-13}
+
+
+
+--------------------------------------------------
+
+Testing SVC
+Starting precise search with PCA=0.95...
+Fitting 2 folds for each of 38400 candidates, totalling 76800 fits
+Precise search completed.
+********************
+Best Score for PCA=0.95: 0.7751
+Best Parameters for PCA=0.95: {'C': np.int64(60), 'class_weight': 'balanced', 'coef0': np.int64(1), 'degree': 3, 'gamma': np.int64(1), 'kernel': 'poly', 'shrinking': True}
+
+Best Score for PCA=0.95: 0.7785
+Best Parameters for PCA=0.95: {'C': np.int64(55), 'class_weight': 'balanced', 'coef0': np.float64(1.8), 'degree': 2, 'gamma': np.float64(0.9), 'kernel': 'poly', 'shrinking': True}
+
+
+--------------------------------------------------
+
+Testing KNN
+Starting precise search with PCA=0.95...
+Fitting 2 folds for each of 28800 candidates, totalling 57600 fits
+Precise search completed.
+********************
+Best Score for PCA=0.95: 0.7303
+Best Parameters for PCA=0.95: {'algorithm': 'auto', 'leaf_size': np.int64(10), 'metric': 'minkowski', 'n_jobs': None, 'n_neighbors': 15, 'p': np.int64(1), 'weights': 'uniform'}
+
+Best Score for PCA=0.95: 0.7406
+Best Parameters for PCA=0.95: {'algorithm': 'auto', 'leaf_size': np.int64(1), 'metric': 'minkowski', 'n_neighbors': np.int64(20), 'p': np.int64(1), 'weights': 'distance'}
+
+
+--------------------------------------------------
+
+Testing DecisionTree
+Starting precise search with PCA=0.95...
+Fitting 2 folds for each of 5400 candidates, totalling 10800 fits
+Precise search completed.
+********************
+Best Score for PCA=0.95: 0.7059
+Best Parameters for PCA=0.95: {'class_weight': 'balanced', 'criterion': 'gini', 'max_depth': np.int64(10), 'max_features': 'sqrt', 'min_samples_leaf': np.int64(20), 'min_samples_split': np.int64(40), 'splitter': 'best'}
+
+Best Score for PCA=0.95: 0.7060
+Best Parameters for PCA=0.95: {'class_weight': 'balanced', 'criterion': 'log_loss', 'max_depth': np.int64(4), 'max_features': 'log2', 'min_samples_leaf': np.int64(19), 'min_samples_split': np.int64(40), 'splitter': 'best'}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

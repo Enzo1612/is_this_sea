@@ -1,6 +1,6 @@
 import random
 
-from PIL import Image, ImageEnhance
+from PIL import Image
 import numpy as np
 import os
 from skimage.feature import hog
@@ -72,7 +72,7 @@ class Sample:
 
         return hist
 
-    def computeWeightedHisto(self, PImage, bottom_weight=2.0, bottom_ratio=0.33):
+    def computeWeightedHisto(self, PImage, bottom_weight=2, bottom_ratio=0.33):
         # Ensures the image is in HSV mode
         if PImage.mode != 'RGB':
             PImage = PImage.convert('RGB')
@@ -192,6 +192,7 @@ class Sample:
                 # shifts = [-6, 6] # Test error: 0.24, Train error: 0.16
                 # shifts = [-4, 4] # Test error: 0.24, Train error: 0.17
                 # shifts = [-7, -5, 5, 7] # Test error: 0.22, Train error: 0.16
+                # shifts = [-5, -2.5, 2.5, 5]  # Test error: 0.26, Train error: 0.15
                 for shift in shifts:
                     final_images.append(self.apply_hue_shift(img, shift))
                 # for shift in [-15, -10, -5, 5, 10, 15]:
@@ -213,7 +214,8 @@ class Sample:
         # Work in HSV, shift only H channel
         hsv = np.array(PImage.convert("HSV"), dtype=np.uint8)
 
-        h = hsv[:, :, 0].astype(np.int16)          # avoid overflow on +/- shift
+        h = hsv[:, :, 0].astype(np.int16) 
+        # avoid overflow on +/- shift
         hsv[:, :, 0] = ((h + hue_shift) % 256).astype(np.uint8)
 
         return Image.fromarray(hsv, "HSV").convert("RGB")

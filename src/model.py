@@ -3,7 +3,6 @@ from sklearn.metrics import accuracy_score
 from sklearn.model_selection import cross_val_score
 
 from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from sklearn.pipeline import Pipeline
 
 # Importation of the models

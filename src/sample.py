@@ -173,7 +173,7 @@ class Sample:
 
         # Flip all of the above images (original + rotations)
         if apply_flip:
-            flipped_images = [img.transpose(Image.FLIP_LEFT_RIGHT) for img in base_images]
+            flipped_images = [img.transpose(Image.Transpose.FLIP_LEFT_RIGHT) for img in base_images]
         else:
             flipped_images = []
 
@@ -184,8 +184,8 @@ class Sample:
         for img in all_geometric_images:
             final_images.append(img)
             if apply_hue_shift:
-                # nb = random.choice([1, 2, 3])  # Randomly choose to apply either 1 or 2 hue shifts
-                # shifts = random.sample(range(-15, 16), nb)  # Randomly select 2 shifts from the range [-15, 15]
+                # nb = random.choice([1, 2, 3])  # Randomly choose to apply 1 to 3 hue shifts
+                # shifts = random.sample(range(-15, 16), nb)  # Randomly select nb shifts from the range [-15, 15]
                 shifts = [-5, 5]  # Test error: 0.20, Train error: 0.17
                 # shifts = [-10, -5, 5, 10]  # Test error: 0.21, Train error: 0.16
                 # shifts = [-10, 10]  # Test error: 0.22, Train error: 0.17
@@ -195,18 +195,6 @@ class Sample:
                 # shifts = [-5, -2.5, 2.5, 5]  # Test error: 0.26, Train error: 0.15
                 for shift in shifts:
                     final_images.append(self.apply_hue_shift(img, shift))
-                # for shift in [-15, -10, -5, 5, 10, 15]:
-                #     final_images.append(self.apply_hue_shift(img, shift))
-
-
-        # # Apply brightness modifications to all images (original, rotations, and flips)
-        # final_images = []
-        # for img in all_geometric_images:
-        #     final_images.append(img) # Keep the image with original brightness
-        #     # Add versions with modified brightness
-        #     if apply_hue_shift:
-        #         final_images.append(ImageEnhance.Brightness(img).enhance(0.7))
-        #         final_images.append(ImageEnhance.Brightness(img).enhance(1.3))
 
         return final_images
     
@@ -215,7 +203,7 @@ class Sample:
         hsv = np.array(PImage.convert("HSV"), dtype=np.uint8)
 
         h = hsv[:, :, 0].astype(np.int16) 
-        # avoid overflow on +/- shift
+        # Avoid overflow on shift
         hsv[:, :, 0] = ((h + hue_shift) % 256).astype(np.uint8)
 
         return Image.fromarray(hsv, "HSV").convert("RGB")

@@ -1,5 +1,4 @@
 import json
-import itertools
 
 from sklearn.decomposition import PCA
 from sklearn.model_selection import GridSearchCV
@@ -17,17 +16,19 @@ def mass_test(train_X_y, algos):
     for algo in algos:
         print(f"Testing {algo['algo']}")
 
-        # print("Starting broad search...")
-        # random_search = broad_search(algo, train_X_y, n_iter=10, folds=5, pca=pca)
-        # print("Broad search completed.")
-
-        # params = getCloseParams(random_search, algo["hyper"], amount=3, fill_with_random=False)
-
         # for i in [j/100 for j in range(50, 100, 5)]:
         for i in [0.95]:  # Only test with PCA=0.95 for now
-            print(f"Starting precise search with PCA={i}...")
-            # print("Starting precise search...")
-            grid_search = precise_search(algo, train_X_y, clean_hyperparameters(algo["hyper"]), cv=1, pca=i)
+            print(f"Using PCA={i}...")
+
+            print("Starting broad search...")
+            random_search = broad_search(algo, train_X_y, n_iter=10, folds=5, pca=i)
+            print("Broad search completed.")
+
+            params = getCloseParams(random_search, algo["hyper"], amount=10, fill_with_random=False)
+            # params = clean_hyperparameters(params)
+
+            print("Starting precise search...")
+            grid_search = precise_search(algo, train_X_y, params, cv=1, pca=i)
             print("Precise search completed.")
 
             top_models[f"{algo['algo']}_{i}"] = {
@@ -61,7 +62,7 @@ def precise_search(algo, train_X_y, params, cv=5, pca=0.95):
     )
 
     pipeline = Pipeline([
-        ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping 95% of variance
+        ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping pca% of variance
         ('clf', grid_search) # Learns of the processed histogram
     ])
 
@@ -71,8 +72,9 @@ def precise_search(algo, train_X_y, params, cv=5, pca=0.95):
 def broad_search(algo, train_X_y, n_iter=50, folds=1, pca=0.95):
 
     params = clean_hyperparameters(algo["hyper"])
+    random_search = None
 
-    for i in range(folds):
+    for i in range(max(folds, 1)):  # Ensures at least one iteration
         print(f"Broad search iteration {i + 1}/{folds} for {algo['algo']}")
         random_search = RandomizedSearchCV(
             estimator=model.models[algo["algo"]](),
@@ -87,13 +89,13 @@ def broad_search(algo, train_X_y, n_iter=50, folds=1, pca=0.95):
         )
 
         pipeline = Pipeline([
-            ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping 95% of variance
+            ('pca', PCA(n_components=pca)), # Reduce dimensionality while keeping pca% of variance
             ('clf', random_search) # Learns of the processed histogram
         ])
 
         pipeline.fit(train_X_y[0], train_X_y[1])
 
-        params = getCloseParams(random_search, algo["hyper"], amount=50, fill_with_random=True)
+        params = getCloseParams(random_search, algo["hyper"], amount=100, fill_with_random=True)
 
     return random_search
 
@@ -129,16 +131,17 @@ def getCloseParams(random_search, hyper, amount=5, fill_with_random=True):
             if best_val is not None and best_val in all_values:
                 # Start with the best value
                 selected = [best_val]
-                # Randomly sample remaining values
-                others = [v for v in all_values if v != best_val]
-                remaining_amount = amount - 1
-                if len(others) > remaining_amount:
-                    selected.extend(random.sample(others, remaining_amount))
-                else:
-                    selected.extend(others)  # Take all if not enough others
+                if (fill_with_random and len(all_values) > 1):
+                    # Randomly sample remaining values
+                    others = [v for v in all_values if v != best_val]
+                    remaining_amount = amount - 1
+                    if len(others) > remaining_amount:
+                        selected.extend(random.sample(others, remaining_amount))
+                    else:
+                        selected.extend(others)  # Take all if not enough others
                 close_params[param] = selected
             else:
-                # Fallback if best_val not found
+                # In case best_val is not found
                 close_params[param] = random.sample(all_values, min(amount, len(all_values)))
         else:
             raise ValueError("Invalid hyperparameter type")
@@ -154,34 +157,11 @@ def select_around(lst, center, step, max_size):
 
     candidates.sort(key=lambda t: t[0])
     
-    return [x for _, x in candidates[:max_size]]
-
-
-
-"""
-algo = {
-    "algo": "SVC",
-    "hyper": {
-        "C": {
-            "type": "continuous",
-            "step": 0.1,
-            "range": [0.1, 10.0]
-        },
-        "kernel": {
-            "type": "discrete",
-            "values": ["linear", "rbf", "poly"]
-        },
-        "gamma": {
-            "type": "discrete",
-            "values": ["scale", "auto"]
-        }
-    }
-}
-"""     
+    return [x for _, x in candidates[:max_size]]    
 
 def test (train_sample, test_sample, algo):
     clf, X, y = model.fitFromHisto(train_sample, algo=algo)
-    _, _, test_err = model.predictFromHisto(test_sample, clf)
+    _, _, test_err, _ = model.predictFromHisto(test_sample, clf)
     train_err = model.get_train_error(clf, X, y)
 
     return (test_err, train_err)
@@ -194,14 +174,3 @@ def mass_test_from_json(train_X_y, json_path, model_name=None):
         algos = [algo for algo in algos if algo["algo"] == model_name]
 
     mass_test(train_X_y, algos)
-
-# def mass_single_model_from_json(train_X_y, json_path, model_name):
-#     with open(json_path, "r") as f:
-#         algos = json.load(f)
-    
-#     algo = next((a for a in algos if a["algo"] == model_name), None)
-#     if algo is None:
-#         raise ValueError(f"Model {model_name} not found in JSON.")
-    
-#     return mass_test(train_X_y, [algo])
-

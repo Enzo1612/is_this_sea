@@ -33,82 +33,11 @@ def predictFile(sample, EE, ER, filename="KING_BE4RN2000.txt"):
         if ER is not None:
             f.write(f"# ER = {ER:.2f}\n")
 
+# Best model for now
+best_algo = {"algo": "SVC", "hyper": {'C': 90, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.31, 'kernel': 'sigmoid'}}
 
-algos = [
-
-    {
-        "algo": "SVC",
-        "hyper": {
-            "kernel": "rbf",
-            "C": 1.0,
-            "gamma": "scale",
-            "class_weight": "balanced",
-            "probability": False
-        },
-        "HP_str": "TODO",
-        "descipteurs": "TODO"
-    },
-
-    {
-        "algo": "KNN",
-        "hyper": {
-            "n_neighbors": 5,
-            "weights": "distance",
-            "metric": "minkowski",
-            "p": 2,
-            "algorithm": "auto"
-        },
-        "HP_str": "TODO",
-        "descipteurs": "TODO"
-    },
-
-    {
-        "algo": "DecisionTree",
-        "hyper": {
-            "criterion": "gini",
-            "max_depth": 5,
-            "min_samples_split": 4,
-            "min_samples_leaf": 2,
-            "max_features": "sqrt"
-        },
-        "HP_str": "TODO",
-        "descipteurs": "TODO"
-    },
-
-    {
-        "algo": "RandomForest",
-        "hyper": {
-            "n_estimators": 200,
-            "max_depth": 5,
-            "min_samples_split": 4,
-            "min_samples_leaf": 2,
-            "max_features": "sqrt"
-        },
-        "HP_str": "TODO",
-        "descipteurs": "TODO"
-    },
-
-    {
-        "algo": "Bagging",
-        "hyper": {
-            "n_estimators": 100,
-            "max_samples": 0.5,
-            "max_features": 0.8,
-            "bootstrap": True,
-            "bootstrap_features": False
-        },
-        "HP_str": "TODO",
-        "descipteurs": "TODO"
-    }
-
-]
-
-algo_test = [   # C: 2 / kernel: linear / gamma: auto
-    {"algo": "SVC", "hyper": {'C': 90, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.31, 'kernel': 'sigmoid'}},
-    {"algo": "SVC", "hyper": {'C': 78, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.347, 'kernel': 'sigmoid'}},
-    {"algo": "SVC", "hyper": {'C': 90, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.157, 'kernel': 'rbf'}},
-    {"algo": "SVC", "hyper": {'C': 98, 'class_weight': 'balanced', 'degree': 2, 'gamma': 'scale', 'kernel': 'linear'}},
-    # {"algo": "KNN", "hyper": {'n_neighbors': 5, 'weights': 'distance', 'metric': 'minkowski', 'p': 2, 'algorithm': 'auto'}},
+algo_test = [
+    best_algo
 ]
 
 def main():
@@ -145,12 +74,8 @@ def main_full_train(test_folder_path="data/raw/Init/Data"):
     test_sample = s.buildSingleSampleFromPath(path1=test_folder_path+"/Mer", path2=test_folder_path+"/Ailleurs", augment=False)
     print(f"Train sample size: {len(train_sample)}, Test sample size: {len(test_sample)}")
 
-    # meilleur :
-    algo = {"algo": "SVC", "hyper": {'C': 90, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.31, 'kernel': 'sigmoid'}}
+    algo = best_algo
     
-    # algo = {"algo": "SVC", "hyper": {'C': 90, 'class_weight': 'balanced', 'degree': 2, 'gamma': 0.157, 'kernel': 'rbf'}}
-    # algo = {"algo": "SVC", "hyper": {'C': 10.7, 'class_weight': 'balanced', 'degree': 1, 'gamma': 3.6, 'kernel': 'sigmoid'}}
-
     print(f"Testing {algo['algo']}")
     classifieur, X_train, y_train = model.fitFromHisto(train_sample, algo=algo, use_hog=use_hog, use_histo_hsv=use_histo_hsv, use_hsv_lbp=use_hsv_lbp, use_histo_rgb=use_histo_rgb)
     print("fit done")
@@ -162,9 +87,6 @@ def main_full_train(test_folder_path="data/raw/Init/Data"):
     cm = confusion_matrix(y_test, y_pred_test)
     print("Confusion Matrix: ")
     print(cm)
-
-    # cv = model.cross_val_on_sample(X_test, y_test, classifieur, cv=5)
-    # print(cv, cv.mean(), sep="\t")
 
     print(f"Test error: {test_err:.2f}, Train error: {train_err:.2f}")
     print("\n", "-" * 50, "\n", sep="")
